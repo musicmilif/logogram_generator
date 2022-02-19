@@ -1,3 +1,4 @@
+import math
 import torch
 from torch import nn
 
@@ -124,37 +125,33 @@ class GeneratorNet(nn.Module):
         embedding_dim: int,
         noise_dim: int,
         gen_channels: int,
+        resolution: int,
     ):
         super().__init__()
+        self.num_layers = int(math.log(resolution, 2)) - 5
         self.ca_net = ConditioningAugmentation(text_dim, embedding_dim)
+        self.generator_layers = [
+            InitialGenerator(gen_channels * 16, noise_dim, embedding_dim)
+        ]
+        self.image_layers = [ImageGenerator(gen_channels)]
 
-        # Image resolution: 64x64
-        self.init_net = InitialGenerator(gen_channels * 16, noise_dim, embedding_dim)
-        self.img_net0 = ImageGenerator(gen_channels)
-        # Image resolution: 128x128
-        self.g_net1 = RepeatedGenerator(gen_channels, embedding_dim)
-        self.img_net1 = ImageGenerator(gen_channels // 2)
-        # Image resolution: 256x256
-        self.g_net2 = RepeatedGenerator(gen_channels // 2, embedding_dim)
-        self.img_net2 = ImageGenerator(gen_channels // 4)
-        # Image resolution: 512x512
-        self.g_net3 = RepeatedGenerator(gen_channels // 4, embedding_dim)
-        self.img_net3 = ImageGenerator(gen_channels // 8)
+        for i in range(1, self.num_layers):
+            self.generator_layers.append(
+                RepeatedGenerator(gen_channels // (2 ** (i - 1)), embedding_dim)
+            )
+            self.image_layers.append(ImageGenerator(gen_channels // (2 ** i)))
 
     def forward(self, text_embedding, noise):
         fake_images = []
         context, mu_, logvar_ = self.ca_net(text_embedding)
 
-        output = self.init_net(context, noise)
-        fake_images.append(self.img_net0(output))
+        output = self.generator_layers[0](context, noise)
+        fake_images.append(self.image_layers[0](output))
+        print(0, output.shape, self.image_layers[0](output).shape)
 
-        output = self.g_net1(output, context)
-        fake_images.append(self.img_net1(output))
-
-        output = self.g_net2(output, context)
-        fake_images.append(self.img_net2(output))
-
-        output = self.g_net3(output, context)
-        fake_images.append(self.img_net3(output))
+        for i in range(1, self.num_layers):
+            output = self.generator_layers[i](output, context)
+            fake_images.append(self.image_layers[i](output))
+            print(i, output.shape, self.image_layers[i](output).shape)
 
         return fake_images, mu_, logvar_
