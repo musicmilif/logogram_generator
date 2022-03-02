@@ -2,7 +2,7 @@ import math
 import torch
 from torch import nn
 
-from stack_gan.general_layers import conv3x3, ConditioningAugmentation
+from model.general_layers import conv3x3
 
 
 def forward_block(in_channels: int, out_channels: int):
@@ -41,14 +41,11 @@ def down_sampling_image_block(dis_channels: int, reduction_ratio: int):
 
 
 class DiscriminatorResN(nn.Module):
-    def __init__(
-        self, dis_channels: int, text_dim: int, embedding_dim: int, resolution: int
-    ):
+    def __init__(self, dis_channels: int, embedding_dim: int, resolution: int):
         super().__init__()
         self.dis_channels = dis_channels
         self.embedding_dim = embedding_dim
 
-        self.ca_net = ConditioningAugmentation(text_dim, embedding_dim)
         self.encode_image = down_sampling_image_block(dis_channels, resolution // 4)
         self.joint_block = forward_block(
             dis_channels * 8 + embedding_dim, dis_channels * 8
@@ -62,9 +59,8 @@ class DiscriminatorResN(nn.Module):
             nn.Sigmoid(),
         )
 
-    def forward(self, x, text_embedding):
+    def forward(self, x, context):
         x = self.encode_image(x)
-        context, _, _ = self.ca_net(text_embedding)
         context = context.view(-1, self.embedding_dim, 1, 1).repeat(1, 1, 4, 4)
 
         x = torch.cat((context, x), 1)

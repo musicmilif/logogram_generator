@@ -2,7 +2,7 @@ import math
 import torch
 from torch import nn
 
-from stack_gan.general_layers import ConditioningAugmentation, conv3x3
+from model.general_layers import ConditioningAugmentation, conv3x3
 
 
 def upsamping_block(in_channels: int, out_channels: int):
@@ -147,11 +147,9 @@ class GeneratorNet(nn.Module):
 
         output = self.generator_layers[0](context, noise)
         fake_images.append(self.image_layers[0](output))
-        print(0, output.shape, self.image_layers[0](output).shape)
 
         for i in range(1, self.num_layers):
             output = self.generator_layers[i](output, context)
             fake_images.append(self.image_layers[i](output))
-            print(i, output.shape, self.image_layers[i](output).shape)
 
         return fake_images, mu_, logvar_
