@@ -1,0 +1,36 @@
+import os
+from collections import OrderedDict
+
+import torch
+
+
+def remove_redundant_keys(state_dict: OrderedDict):
+    # remove DataParallel wrapping
+    if "module" in list(state_dict.keys())[0]:
+        new_state_dict = OrderedDict()
+        for k, v in state_dict.items():
+            if k.startswith("module."):
+                new_state_dict[k[7:]] = v
+    else:
+        new_state_dict = state_dict
+
+    return new_state_dict
+
+
+def save_checkpoint(dir_path, epoch, models, optimizer):
+    # Generator
+    generator_dict = {
+        "epoch": epoch,
+        "state_dict": remove_redundant_keys(models["generator"].state_dict()),
+        "optimizer": optimizer["generator"].state_dict(),
+    }
+    torch.save(generator_dict, os.path.join(dir_path, "generator.ckpt"))
+
+    # Discriminator
+    for i, (m, o) in enumerate(zip(models["discriminator"], optimizer["discriminator"])):
+        discriminator_dict = {
+            "epoch": epoch,
+            "state_dict": remove_redundant_keys(m.state_dict()),
+            "optimizer": o.state_dict(),
+        }
+        torch.save(discriminator_dict, os.path.join(dir_path, f"discriminator{i}.ckpt"))
