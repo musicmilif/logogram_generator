@@ -1,9 +1,20 @@
 from typing import Any, Dict
 import torch
-from torch.nn import KLDivLoss
+from torch.nn.modules.loss import _Loss
 from torch.utils.data import DataLoader
 
 from utils import save_checkpoint
+
+
+class KLDivLoss(_Loss):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, input, target):
+        kl_ = input.pow(2).add_(target.exp()).mul_(-1).add_(1).add_(target)
+        loss = torch.mean(kl_).mul_(-0.5)
+
+        return loss
 
 
 class GANTrainer:
@@ -103,7 +114,7 @@ class GANTrainer:
             )
             total_loss += loss
 
-        kl_divergance = KLDivLoss(reduction="batchmean")(mu_, logvar_)
+        kl_divergance = KLDivLoss()(mu_, logvar_)
         total_loss += kl_divergance
         total_loss.backward()
         self.optimizers["generator"].step()

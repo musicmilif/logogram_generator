@@ -36,7 +36,11 @@ def main():
         },
         cond_weight=configs["training"]["cond_weight"],
     )
-    model.train(train_loader, configs["training"]["num_epochs"])
+    model.train(
+        train_loader,
+        configs["training"]["num_epochs"],
+        configs["training"]["snapshot_at"],
+    )
 
     return
 

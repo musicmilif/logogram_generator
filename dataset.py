@@ -3,7 +3,7 @@ import os
 import re
 from glob import glob
 from pathlib import Path
-from typing import List, Tuple, Optional
+from typing import List, Optional
 
 import albumentations as albu
 import cv2
