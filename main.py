@@ -9,12 +9,12 @@ from trainer import GANTrainer
 
 
 def main():
-    with open('config.yaml') as f:
+    with open("config.yaml") as f:
         configs = yaml.safe_load(f)
 
-    log_df = ImageReader(
-        resolution=configs["image"]["resolution"]
-    ).load_images(images_dir="./images")
+    log_df = ImageReader(resolution=configs["image"]["resolution"]).load_images(
+        images_dir="./images"
+    )
 
     log_dataset = LogogramDataset(
         df=log_df,

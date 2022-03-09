@@ -139,7 +139,7 @@ class GeneratorNet(nn.Module):
             self.generator_layers.append(
                 RepeatedGenerator(gen_channels // (2 ** (i - 1)), embedding_dim)
             )
-            self.image_layers.append(ImageGenerator(gen_channels // (2 ** i)))
+            self.image_layers.append(ImageGenerator(gen_channels // (2**i)))
 
     def forward(self, text_embedding, noise):
         fake_images = []

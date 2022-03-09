@@ -24,8 +24,9 @@ class GANTrainer:
             ),
             "discriminator": [
                 optimizers["discriminator"](
-                    m.parameters(), lr=optimizer_params["dis_lr"], betas=(0.5, 0.999),
-                ) for m in self.models["discriminator"]
+                    m.parameters(), lr=optimizer_params["dis_lr"], betas=(0.5, 0.999)
+                )
+                for m in self.models["discriminator"]
             ],
         }
         self.criterions = criterions
@@ -66,7 +67,9 @@ class GANTrainer:
             self.models["discriminator"][i].train()
             pos_preds = self.models["discriminator"][i](pos_images[i], mu_.detach())
             neg_preds = self.models["discriminator"][i](neg_images[i], mu_.detach())
-            fake_preds = self.models["discriminator"][i](fake_images[i].detach(), mu_.detach())
+            fake_preds = self.models["discriminator"][i](
+                fake_images[i].detach(), mu_.detach()
+            )
 
             loss = (
                 self.cond_weight * criterion(pos_preds[0], pos_label)

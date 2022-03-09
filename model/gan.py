@@ -16,8 +16,9 @@ def stack_gan(resolution: int, configs: Dict[str, Any]):
         ),
         "discriminator": [
             DiscriminatorResN(
-                configs["dis_channels"], configs["embedding_dim"], 2 ** res
-            ) for res in range(6, int(math.log(resolution, 2)) + 1)
-        ]
+                configs["dis_channels"], configs["embedding_dim"], 2**res
+            )
+            for res in range(6, int(math.log(resolution, 2)) + 1)
+        ],
     }
     return models

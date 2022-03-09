@@ -31,7 +31,9 @@ def save_checkpoint(dir_path, epoch, models, optimizer):
     torch.save(generator_dict, os.path.join(base_dir, "generator.ckpt"))
 
     # Discriminator
-    for i, (m, o) in enumerate(zip(models["discriminator"], optimizer["discriminator"])):
+    for i, (m, o) in enumerate(
+        zip(models["discriminator"], optimizer["discriminator"])
+    ):
         discriminator_dict = {
             "epoch": epoch,
             "state_dict": remove_redundant_keys(m.state_dict()),
