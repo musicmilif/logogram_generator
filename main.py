@@ -34,11 +34,12 @@ def main():
             "gen_lr": configs["training"]["gen_lr"],
             "dis_lr": configs["training"]["dis_lr"],
         },
+        cond_weight=configs["training"]["cond_weight"],
     )
     model.train(train_loader, configs["training"]["num_epochs"])
 
     return
- 
+
 
 if __name__ == "__main__":
     main()

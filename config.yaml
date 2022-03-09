@@ -3,9 +3,11 @@ image:
 
 training:
   batch_size: 16
-  num_epochs: 50
-  gen_lr: 0.001
-  dis_lr: 0.001
+  num_epochs: 1000
+  snapshot_at: 100
+  gen_lr: 0.0002
+  dis_lr: 0.0002
+  cond_weight: 0.2
 
 model:
   noise_dim: 64

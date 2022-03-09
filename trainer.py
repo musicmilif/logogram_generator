@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader
 
 from utils import save_checkpoint
 
+
 class GANTrainer:
     def __init__(
         self,
@@ -12,6 +13,7 @@ class GANTrainer:
         optimizers: Dict[str, Any],
         criterions: Dict[str, Any],
         optimizer_params: Dict[str, Any],
+        cond_weight: float,
     ):
         self.models = models
         self.optimizers = {
@@ -27,9 +29,10 @@ class GANTrainer:
             ],
         }
         self.criterions = criterions
+        self.cond_weight = cond_weight
 
-    def train(self, data_loader: DataLoader, n_epochs: int):
-        for epoch in range(n_epochs):
+    def train(self, data_loader: DataLoader, n_epochs: int, snapshot_at: int):
+        for epoch in range(1, n_epochs + 1):
             for words, pos_images, neg_images, noise in data_loader:
                 self.models["generator"].eval()
                 with torch.no_grad():
@@ -40,14 +43,16 @@ class GANTrainer:
                 )
                 gen_loss, kl_loss = self.train_generator(fake_images, mu_, logvar_)
 
-            save_checkpoint(
-                "check_points",
-                epoch=epoch,
-                models=self.models,
-                optimizer=self.optimizers,
-            )
+            if epoch % snapshot_at == 0:
+                save_checkpoint(
+                    "check_points",
+                    epoch=epoch,
+                    models=self.models,
+                    optimizer=self.optimizers,
+                )
+
             print(
-                f"Rpoch: {epoch + 1}/{n_epochs} | Discriminator Loss: {dis_loss:.6f}\t"
+                f"Rpoch: {epoch}/{n_epochs} | Discriminator Loss: {dis_loss:.6f}\t"
                 f"Generator Loss: {gen_loss:.6f}\tKL Divergence: {kl_loss:.6f}."
             )
 
@@ -55,6 +60,7 @@ class GANTrainer:
         total_loss = 0
         pos_label, neg_label = torch.ones(mu_.shape[0]), torch.zeros(mu_.shape[0])
         num_models = len(self.models["discriminator"])
+        criterion = self.criterions["discriminator"]
 
         for i in range(num_models):
             self.models["discriminator"][i].train()
@@ -63,12 +69,12 @@ class GANTrainer:
             fake_preds = self.models["discriminator"][i](fake_images[i].detach(), mu_.detach())
 
             loss = (
-                self.criterions["discriminator"](pos_preds[0], pos_label)
-                + self.criterions["discriminator"](pos_preds[1], pos_label)
-                + self.criterions["discriminator"](neg_preds[0], neg_label)
-                + self.criterions["discriminator"](neg_preds[1], pos_label)
-                + self.criterions["discriminator"](fake_preds[0], neg_label)
-                + self.criterions["discriminator"](fake_preds[1], neg_label)
+                self.cond_weight * criterion(pos_preds[0], pos_label)
+                + (1 - self.cond_weight) * criterion(pos_preds[1], pos_label)
+                + self.cond_weight * criterion(neg_preds[0], neg_label)
+                + (1 - self.cond_weight) * criterion(neg_preds[1], pos_label)
+                + self.cond_weight * criterion(fake_preds[0], neg_label)
+                + (1 - self.cond_weight) * criterion(fake_preds[1], neg_label)
             )
             loss.backward(retain_graph=True)
             self.optimizers["discriminator"][i].step()
@@ -82,14 +88,15 @@ class GANTrainer:
         total_loss = 0
         pos_label = torch.ones(mu_.shape[0])
         num_models = len(self.models["discriminator"])
+        criterions = self.criterions["generator"]
 
         self.models["generator"].train()
         for i in range(num_models):
             self.models["discriminator"][i].train()
             fake_preds = self.models["discriminator"][i](fake_images[i], mu_)
             loss = (
-                self.criterions["generator"](fake_preds[0], pos_label)
-                + self.criterions["generator"](fake_preds[1], pos_label)
+                self.cond_weight * criterions(fake_preds[0], pos_label)
+                + (1 - self.cond_weight) * criterions(fake_preds[1], pos_label)
             )
             total_loss += loss
 
