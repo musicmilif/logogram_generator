@@ -42,7 +42,8 @@ def save_checkpoint(dir_path, epoch, models, optimizer):
         torch.save(discriminator_dict, os.path.join(base_dir, f"discriminator{i}.ckpt"))
 
 
-def load_checkpoint(path, model, optimizer):
+def load_checkpoint(path, model, optimizer=None):
     resume = torch.load(path)
     model.load_state_dict(remove_redundant_keys(resume["state_dict"]))
-    optimizer.load_state_dict(resume["optimizer"])
+    if optimizer is not None:
+        optimizer.load_state_dict(resume["optimizer"])

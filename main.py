@@ -1,5 +1,8 @@
 import click
 import yaml
+from typing import Optional
+
+import transformers
 from torch import nn
 from torch.optim import Adam
 from torch.utils.data import DataLoader
@@ -8,11 +11,13 @@ from dataset import transformer, ImageReader, LogogramDataset
 from model.gan import stack_gan
 from trainer import GANTrainer
 
+transformers.logging.set_verbosity_error()
+
 
 @click.command()
-@click.argument("checkpoint_path", type=click.Path(exists=True))
+@click.argument("checkpoint_path", type=click.Path(exists=True), required=False)
 @click.option("--reset_epoch", is_flag=True)
-def cli(checkpoint_path: str, reset_epoch: bool):
+def cli(checkpoint_path: Optional[str], reset_epoch: bool):
     with open("config.yaml") as f:
         configs = yaml.safe_load(f)
 
