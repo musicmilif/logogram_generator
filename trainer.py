@@ -1,9 +1,12 @@
+import os
+from glob import glob
 from typing import Any, Dict
+
 import torch
 from torch.nn.modules.loss import _Loss
 from torch.utils.data import DataLoader
 
-from utils import save_checkpoint
+from utils import load_checkpoint, save_checkpoint
 
 
 class KLDivLoss(_Loss):
@@ -42,9 +45,10 @@ class GANTrainer:
         }
         self.criterions = criterions
         self.cond_weight = cond_weight
+        self.epoch = 0
 
     def train(self, data_loader: DataLoader, n_epochs: int, snapshot_at: int):
-        for epoch in range(1, n_epochs + 1):
+        for epoch in range(self.epoch + 1, self.epoch + n_epochs + 1):
             for words, pos_images, neg_images, noise in data_loader:
                 self.models["generator"].eval()
                 with torch.no_grad():
@@ -64,8 +68,9 @@ class GANTrainer:
                 )
 
             print(
-                f"Rpoch: {epoch}/{n_epochs} | Discriminator Loss: {dis_loss:.6f}\t"
-                f"Generator Loss: {gen_loss:.6f}\tKL Divergence: {kl_loss:.6f}."
+                f"Epoch: {epoch}/{n_epochs + self.epoch} | "
+                f"Discriminator Loss: {dis_loss:.6f}\t"
+                f"Generator Loss: {gen_loss:.6f}\tKL Divergence: {kl_loss:.6f}"
             )
 
     def train_discriminator(self, pos_images, neg_images, fake_images, mu_):
@@ -121,3 +126,22 @@ class GANTrainer:
         self.optimizers["generator"].zero_grad()
 
         return total_loss, kl_divergance
+
+    def load_checkpoint(self, path: str, reset_epoch: bool):
+        # Load generator
+        load_checkpoint(
+            os.path.join(path, "generator.ckpt"),
+            self.models["generator"],
+            self.optimizers["generator"],
+        )
+
+        # Load discriminators
+        for i in range(len(glob(os.path.join(path, "discriminator*")))):
+            load_checkpoint(
+                os.path.join(path, f"discriminator{i}.ckpt"),
+                self.models["discriminator"][i],
+                self.optimizers["discriminator"][i],
+            )
+
+        if not reset_epoch:
+            self.epoch = int(path.split("/")[-1])

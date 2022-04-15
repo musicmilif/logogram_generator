@@ -1,3 +1,4 @@
+import click
 import yaml
 from torch import nn
 from torch.optim import Adam
@@ -8,7 +9,10 @@ from model.gan import stack_gan
 from trainer import GANTrainer
 
 
-def main():
+@click.command()
+@click.argument("checkpoint_path", type=click.Path(exists=True))
+@click.option("--reset_epoch", is_flag=True)
+def cli(checkpoint_path: str, reset_epoch: bool):
     with open("config.yaml") as f:
         configs = yaml.safe_load(f)
 
@@ -36,6 +40,9 @@ def main():
         },
         cond_weight=configs["training"]["cond_weight"],
     )
+    if isinstance(checkpoint_path, str):
+        model.load_checkpoint(checkpoint_path, reset_epoch)
+
     model.train(
         train_loader,
         configs["training"]["num_epochs"],
@@ -46,4 +53,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    cli()
