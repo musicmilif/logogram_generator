@@ -1,0 +1,17 @@
+image:
+  resolution: 512
+
+training:
+  batch_size: 16
+  num_epochs: 1000
+  snapshot_at: 100
+  gen_lr: 0.0002
+  dis_lr: 0.0002
+  cond_weight: 0.2
+
+model:
+  noise_dim: 64
+  text_dim: 768  # Fixed by transformer pretrained model
+  embedding_dim: 128
+  gen_channels: 32
+  dis_channels: 32
