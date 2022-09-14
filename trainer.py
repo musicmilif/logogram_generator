@@ -6,7 +6,7 @@ import torch
 from torch.nn.modules.loss import _Loss
 from torch.utils.data import DataLoader
 
-from utils import load_checkpoint, save_checkpoint
+from utils import load_checkpoint as load_checkpoint_, save_checkpoint
 
 
 class KLDivLoss(_Loss):
@@ -68,9 +68,9 @@ class GANTrainer:
                 )
 
             print(
-                f"Epoch: {epoch}/{n_epochs + self.epoch} | "
-                f"Discriminator Loss: {dis_loss:.6f}\t"
-                f"Generator Loss: {gen_loss:.6f}\tKL Divergence: {kl_loss:.6f}"
+                f"Epoch:{epoch:4}/{n_epochs + self.epoch} | "
+                f"Generator Loss: {gen_loss:.6f}\t"
+                f"Discriminator Loss: {dis_loss:.6f}\tKL Divergence: {kl_loss:.6f}"
             )
 
     def train_discriminator(self, pos_images, neg_images, fake_images, mu_):
@@ -129,7 +129,7 @@ class GANTrainer:
 
     def load_checkpoint(self, path: str, reset_epoch: bool):
         # Load generator
-        load_checkpoint(
+        load_checkpoint_(
             os.path.join(path, "generator.ckpt"),
             self.models["generator"],
             self.optimizers["generator"],
@@ -137,7 +137,7 @@ class GANTrainer:
 
         # Load discriminators
         for i in range(len(glob(os.path.join(path, "discriminator*")))):
-            load_checkpoint(
+            load_checkpoint_(
                 os.path.join(path, f"discriminator{i}.ckpt"),
                 self.models["discriminator"][i],
                 self.optimizers["discriminator"][i],

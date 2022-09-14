@@ -22,7 +22,7 @@ class ConditioningAugmentation(nn.Module):
         self, mu: torch.Tensor, logvar: torch.Tensor, device: torch.device = "cpu"
     ):
         std = 0.5 * torch.exp(logvar)
-        eps = torch.normal(mean=0, std=1, size=std.size()).to(device)
+        eps = torch.normal(mean=0, std=0.025, size=std.size()).to(device)
 
         return mu + eps * std
 

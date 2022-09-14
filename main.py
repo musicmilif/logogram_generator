@@ -54,8 +54,6 @@ def cli(checkpoint_path: Optional[str], reset_epoch: bool):
         configs["training"]["snapshot_at"],
     )
 
-    return
-
 
 if __name__ == "__main__":
     cli()
